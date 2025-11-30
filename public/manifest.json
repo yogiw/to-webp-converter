@@ -1,0 +1,28 @@
+{
+  "name": "WebP Converter",
+  "short_name": "WebP Conv",
+  "description": "Convert images to WebP format instantly in your browser",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f0f",
+  "theme_color": "#22d3ee",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "photo"],
+  "screenshots": [],
+  "prefer_related_applications": false
+}
+
