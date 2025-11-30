@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://webp-converter.com";
+  process.env.NEXT_PUBLIC_SITE_URL || "https://webp.giw.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
