@@ -14,9 +14,26 @@ interface ImageFile {
   convertedSize: number | null;
 }
 
+type OutputFormat = "webp" | "png" | "jpeg";
+
+interface FormatOption {
+  value: OutputFormat;
+  label: string;
+  mimeType: string;
+  extension: string;
+  supportsQuality: boolean;
+}
+
+const FORMAT_OPTIONS: FormatOption[] = [
+  { value: "webp", label: "WebP", mimeType: "image/webp", extension: "webp", supportsQuality: true },
+  { value: "png", label: "PNG", mimeType: "image/png", extension: "png", supportsQuality: false },
+  { value: "jpeg", label: "JPG", mimeType: "image/jpeg", extension: "jpg", supportsQuality: true },
+];
+
 interface ConversionSettings {
   quality: number;
   scale: number;
+  format: OutputFormat;
 }
 
 export function ImageConverter() {
@@ -24,6 +41,7 @@ export function ImageConverter() {
   const [settings, setSettings] = useState<ConversionSettings>({
     quality: 100,
     scale: 100,
+    format: "webp",
   });
   const [isDragging, setIsDragging] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
@@ -87,6 +105,9 @@ export function ImageConverter() {
 
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
+        const formatOption = FORMAT_OPTIONS.find((f) => f.value === settings.format) || FORMAT_OPTIONS[0];
+        const quality = formatOption.supportsQuality ? settings.quality / 100 : undefined;
+
         canvas.toBlob(
           (blob) => {
             if (blob) {
@@ -102,8 +123,8 @@ export function ImageConverter() {
               resolve({ ...imageFile, status: "error" });
             }
           },
-          "image/webp",
-          settings.quality / 100
+          formatOption.mimeType,
+          quality
         );
       };
 
@@ -138,13 +159,18 @@ export function ImageConverter() {
     setIsConverting(false);
   };
 
+  const getFileExtension = () => {
+    const formatOption = FORMAT_OPTIONS.find((f) => f.value === settings.format);
+    return formatOption?.extension || "webp";
+  };
+
   const downloadSingle = (image: ImageFile) => {
     if (!image.convertedUrl) return;
 
     const link = document.createElement("a");
     link.href = image.convertedUrl;
     const originalName = image.file.name.replace(/\.[^/.]+$/, "");
-    link.download = `${originalName}.webp`;
+    link.download = `${originalName}.${getFileExtension()}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -163,10 +189,11 @@ export function ImageConverter() {
 
     const zip = new JSZip();
 
+    const extension = getFileExtension();
     convertedImages.forEach((img) => {
       if (img.convertedBlob) {
         const originalName = img.file.name.replace(/\.[^/.]+$/, "");
-        zip.file(`${originalName}.webp`, img.convertedBlob);
+        zip.file(`${originalName}.${extension}`, img.convertedBlob);
       }
     });
 
@@ -224,13 +251,33 @@ export function ImageConverter() {
             <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
             <circle cx="12" cy="13" r="3" />
           </svg>
-          <span>WebP Converter</span>
+          <span>Image Converter</span>
         </div>
-        <p className="tagline">Convert images to WebP format instantly in your browser</p>
+        <p className="tagline">Convert images to WebP, PNG, or JPG instantly in your browser</p>
       </header>
 
       {/* Settings Panel */}
       <div className="settings-panel">
+        <div className="setting-group">
+          <label htmlFor="format">
+            <span className="setting-label">Output Format</span>
+          </label>
+          <div className="format-selector">
+            {FORMAT_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className={`format-option ${settings.format === option.value ? "active" : ""}`}
+                onClick={() =>
+                  setSettings((prev) => ({ ...prev, format: option.value }))
+                }
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="setting-group">
           <label htmlFor="quality">
             <span className="setting-label">Quality</span>
@@ -249,7 +296,11 @@ export function ImageConverter() {
               }))
             }
             className="slider"
+            disabled={!FORMAT_OPTIONS.find((f) => f.value === settings.format)?.supportsQuality}
           />
+          {!FORMAT_OPTIONS.find((f) => f.value === settings.format)?.supportsQuality && (
+            <span className="setting-hint">PNG uses lossless compression</span>
+          )}
         </div>
 
         <div className="setting-group">
@@ -417,7 +468,7 @@ export function ImageConverter() {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
                   </svg>
-                  Convert to WebP
+                  Convert to {FORMAT_OPTIONS.find((f) => f.value === settings.format)?.label}
                 </>
               )}
             </button>
